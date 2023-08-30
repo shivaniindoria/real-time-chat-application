@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real Time Chat</title>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function ChatApp() {
+            const [messages, setMessages] = useState([]);
+            const [messageInput, setMessageInput] = useState('');
+            const [senderInput, setSenderInput] = useState('');
+
+            useEffect(() => {
+                const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+
+                chatSocket.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    setMessages(prevMessages => [...prevMessages, { sender: data.sender, message: data.message }]);
+                };
+
+                return () => {
+                    chatSocket.close();
+                };
+            }, []);
+
+            const sendMessage = () => {
+                const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+                chatSocket.send(JSON.stringify({
+                    'message': messageInput,
+                    'sender': senderInput
+                }));
+                setMessageInput('');
+            };
+
+            return (
+                <div>
+                    <div>
+                        {messages.map((msg, index) => (
+                            <div key={index}><b>{msg.sender}</b>: {msg.message}</div>
+                        ))}
+                    </div>
+                    <input type="text" value={senderInput} onChange={(e) => setSenderInput(e.target.value)} placeholder="Enter sender ID" />
+                    <input type="text" value={messageInput} onChange={(e) => setMessageInput(e.target.value)} placeholder="Enter message" />
+                    <button onClick={sendMessage}>Send</button>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<ChatApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
