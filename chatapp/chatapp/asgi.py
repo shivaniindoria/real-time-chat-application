@@ -14,3 +14,16 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chatapp.settings')
 
 application = get_asgi_application()
+from channels.routing import ProtocolTypeRouter,URLRouter
+from django.urls import path
+from chat.consumers import ChatConsumer
+
+ws_pattern= [
+    path('chat/<room_code>', ChatConsumer.as_asgi())
+]
+
+application=ProtocolTypeRouter(
+    {
+        'webcoket':(URLRouter(ws_pattern))
+    }
+)
